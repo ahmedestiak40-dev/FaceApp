@@ -1,0 +1,764 @@
+ v<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Detection App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/dist/face-api.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #f1f1f1;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00dbde, #fc00ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .tagline {
+            font-size: 1.2rem;
+            color: #a0a0c0;
+            margin-bottom: 20px;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .panel {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #6ee7ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .panel-title i {
+            font-size: 1.8rem;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            background: #000;
+        }
+        
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .image-container {
+            width: 100%;
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        #imageUpload {
+            display: none;
+        }
+        
+        .upload-label {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            transition: all 0.3s;
+        }
+        
+        .upload-label:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #6ee7ff;
+        }
+        
+        .upload-label i {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+        
+        #imageDisplay {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #00dbde, #fc00ff);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .results {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .results-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #6ee7ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .results-title i {
+            font-size: 1.8rem;
+        }
+        
+        .results-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .result-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .result-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-5px);
+        }
+        
+        .face-count {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #6ee7ff;
+            margin-bottom: 10px;
+        }
+        
+        .face-details {
+            list-style: none;
+            font-size: 0.9rem;
+            color: #c0c0e0;
+        }
+        
+        .face-details li {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6ee7ff;
+            display: none;
+        }
+        
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            animation: spin 1.5s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+        }
+        
+        .status.error {
+            background: rgba(255, 0, 64, 0.1);
+            color: #ff0040;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        .highlight {
+            color: #6ee7ff;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-user-circle"></i> Face Detection App</h1>
+            <p class="tagline">Detect faces in real-time using your webcam or upload an image</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="panel">
+                <h2 class="panel-title"><i class="fas fa-video"></i> Webcam Detection</h2>
+                <div class="video-container">
+                    <video id="video" autoplay muted playsinline></video>
+                    <canvas id="canvas"></canvas>
+                </div>
+                <div class="controls">
+                    <button id="startWebcam" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Start Webcam
+                    </button>
+                    <button id="stopWebcam" class="btn btn-secondary" disabled>
+                        <i class="fas fa-stop"></i> Stop Webcam
+                    </button>
+                    <button id="detectFaceWebcam" class="btn btn-primary" disabled>
+                        <i class="fas fa-search"></i> Detect Faces
+                    </button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2 class="panel-title"><i class="fas fa-file-upload"></i> Image Upload</h2>
+                <div class="image-container">
+                    <input type="file" id="imageUpload" accept="image/*">
+                    <label for="imageUpload" class="upload-label" id="uploadLabel">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Click to upload an image</span>
+                        <span style="font-size: 0.8rem; margin-top: 10px;">Supports JPG, PNG, WEBP</span>
+                    </label>
+                    <img id="imageDisplay" alt="Uploaded image">
+                </div>
+                <div class="controls">
+                    <button id="detectFaceImage" class="btn btn-primary" disabled>
+                        <i class="fas fa-search"></i> Detect Faces in Image
+                    </button>
+                    <button id="clearImage" class="btn btn-secondary" disabled>
+                        <i class="fas fa-trash"></i> Clear Image
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Loading face detection models...</p>
+        </div>
+        
+        <div class="status" id="status"></div>
+        
+        <div class="results" id="results" style="display: none;">
+            <h2 class="results-title"><i class="fas fa-chart-bar"></i> Detection Results</h2>
+            <div class="results-content" id="resultsContent">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+        
+        <footer>
+            <p>Powered by <span class="highlight">Face API.js</span> | Face Detection App &copy; 2023</p>
+            <p style="margin-top: 10px; font-size: 0.8rem;">This app runs entirely in your browser. No images are sent to any server.</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const imageUpload = document.getElementById('imageUpload');
+        const imageDisplay = document.getElementById('imageDisplay');
+        const uploadLabel = document.getElementById('uploadLabel');
+        const startWebcamBtn = document.getElementById('startWebcam');
+        const stopWebcamBtn = document.getElementById('stopWebcam');
+        const detectFaceWebcamBtn = document.getElementById('detectFaceWebcam');
+        const detectFaceImageBtn = document.getElementById('detectFaceImage');
+        const clearImageBtn = document.getElementById('clearImage');
+        const loadingElement = document.getElementById('loading');
+        const statusElement = document.getElementById('status');
+        const resultsElement = document.getElementById('results');
+        const resultsContent = document.getElementById('resultsContent');
+        
+        // Variables
+        let stream = null;
+        let modelsLoaded = false;
+        let detectionInterval = null;
+        const ctx = canvas.getContext('2d');
+        
+        // Model URLs - Using CDN for models
+        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+        
+        // Initialize the app
+        async function init() {
+            showLoading();
+            showStatus('Loading face detection models... This may take a moment.', 'info');
+            
+            try {
+                // Load face-api models from CDN
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+                
+                modelsLoaded = true;
+                hideLoading();
+                showStatus('Models loaded successfully! You can now use the face detection features.', 'success');
+                console.log('Face detection models loaded');
+                
+                // Enable buttons that require models
+                detectFaceWebcamBtn.disabled = false;
+                detectFaceImageBtn.disabled = false;
+            } catch (error) {
+                hideLoading();
+                showStatus(`Error loading models: ${error.message}. Please check your connection and try again.`, 'error');
+                console.error('Error loading models:', error);
+                
+                // Try alternative model loading approach
+                tryAlternativeModelLoading();
+            }
+        }
+        
+        // Alternative model loading approach
+        async function tryAlternativeModelLoading() {
+            showStatus('Trying alternative model loading method...', 'info');
+            
+            try {
+                // Try loading with minimal models
+                await faceapi.nets.tinyFaceDetector.load(MODEL_URL);
+                modelsLoaded = true;
+                hideLoading();
+                showStatus('Basic face detection model loaded. Some features may be limited.', 'success');
+                
+                // Enable buttons that require models
+                detectFaceWebcamBtn.disabled = false;
+                detectFaceImageBtn.disabled = false;
+            } catch (error) {
+                hideLoading();
+                showStatus(`Could not load face detection models. Please refresh the page and try again.`, 'error');
+                console.error('Alternative model loading failed:', error);
+            }
+        }
+        
+        // Webcam Functions
+        async function startWebcam() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480 },
+                    audio: false 
+                });
+                video.srcObject = stream;
+                
+                startWebcamBtn.disabled = true;
+                stopWebcamBtn.disabled = false;
+                detectFaceWebcamBtn.disabled = false;
+                
+                showStatus('Webcam started successfully!', 'success');
+            } catch (error) {
+                showStatus(`Error accessing webcam: ${error.message}`, 'error');
+                console.error('Error accessing webcam:', error);
+            }
+        }
+        
+        function stopWebcam() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                stream = null;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                startWebcamBtn.disabled = false;
+                stopWebcamBtn.disabled = true;
+                detectFaceWebcamBtn.disabled = true;
+                
+                // Stop detection if running
+                if (detectionInterval) {
+                    clearInterval(detectionInterval);
+                    detectionInterval = null;
+                }
+                
+                showStatus('Webcam stopped.', 'info');
+            }
+        }
+        
+        // Face Detection Functions
+        async function detectFacesInVideo() {
+            if (!modelsLoaded) {
+                showStatus('Models not loaded yet. Please wait.', 'error');
+                return;
+            }
+            
+            if (!stream) {
+                showStatus('Please start the webcam first.', 'error');
+                return;
+            }
+            
+            // Set canvas dimensions to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Clear previous drawings
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            try {
+                // Detect faces
+                const detections = await faceapi.detectAllFaces(
+                    video, 
+                    new faceapi.TinyFaceDetectorOptions()
+                ).withFaceLandmarks().withFaceExpressions();
+                
+                // Draw detections on canvas
+                const resizedDetections = faceapi.resizeResults(detections, {
+                    width: video.videoWidth,
+                    height: video.videoHeight
+                });
+                
+                faceapi.draw.drawDetections(canvas, resizedDetections);
+                faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+                faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+                
+                // Update results display
+                updateResults(detections, 'webcam');
+            } catch (error) {
+                console.error('Error detecting faces:', error);
+                showStatus('Error detecting faces. Please try again.', 'error');
+            }
+        }
+        
+        async function detectFacesInImage() {
+            if (!modelsLoaded) {
+                showStatus('Models not loaded yet. Please wait.', 'error');
+                return;
+            }
+            
+            if (!imageDisplay.src || imageDisplay.style.display === 'none') {
+                showStatus('Please upload an image first.', 'error');
+                return;
+            }
+            
+            showStatus('Detecting faces in image...', 'info');
+            
+            // Create a temporary canvas for the image
+            const img = document.createElement('img');
+            img.src = imageDisplay.src;
+            
+            await img.decode();
+            
+            try {
+                // Detect faces
+                const detections = await faceapi.detectAllFaces(
+                    img, 
+                    new faceapi.TinyFaceDetectorOptions()
+                ).withFaceLandmarks().withFaceExpressions();
+                
+                // Draw detections on the image
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                
+                // Draw the original image
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+                
+                // Draw face detections
+                const resizedDetections = faceapi.resizeResults(detections, {
+                    width: img.width,
+                    height: img.height
+                });
+                
+                faceapi.draw.drawDetections(canvas, resizedDetections);
+                faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+                faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+                
+                // Update the image display with the detected faces
+                imageDisplay.src = canvas.toDataURL();
+                
+                // Update results display
+                updateResults(detections, 'image');
+            } catch (error) {
+                console.error('Error detecting faces in image:', error);
+                showStatus('Error detecting faces in image. Please try again.', 'error');
+            }
+        }
+        
+        function startContinuousDetection() {
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+            }
+            
+            detectionInterval = setInterval(detectFacesInVideo, 300);
+            detectFaceWebcamBtn.innerHTML = '<i class="fas fa-pause"></i> Stop Detection';
+            detectFaceWebcamBtn.onclick = stopContinuousDetection;
+            showStatus('Continuous face detection started!', 'success');
+        }
+        
+        function stopContinuousDetection() {
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+            
+            detectFaceWebcamBtn.innerHTML = '<i class="fas fa-search"></i> Detect Faces';
+            detectFaceWebcamBtn.onclick = startContinuousDetection;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            showStatus('Continuous detection stopped.', 'info');
+        }
+        
+        // Results Display Functions
+        function updateResults(detections, source) {
+            const faceCount = detections.length;
+            
+            // Show results section if hidden
+            resultsElement.style.display = 'block';
+            
+            // Clear previous results
+            resultsContent.innerHTML = '';
+            
+            // Create result cards for each face
+            detections.forEach((detection, index) => {
+                const { expressions } = detection;
+                const dominantExpression = getDominantExpression(expressions);
+                
+                // Create result card
+                const resultCard = document.createElement('div');
+                resultCard.className = 'result-card';
+                
+                resultCard.innerHTML = `
+                    <div class="face-count">Face #${index + 1}</div>
+                    <ul class="face-details">
+                        <li><strong>Confidence:</strong> ${(detection.detection.score * 100).toFixed(2)}%</li>
+                        <li><strong>Dominant Expression:</strong> ${dominantExpression}</li>
+                        <li><strong>Detected from:</strong> ${source === 'webcam' ? 'Webcam' : 'Uploaded Image'}</li>
+                    </ul>
+                `;
+                
+                resultsContent.appendChild(resultCard);
+            });
+            
+            // If no faces detected
+            if (faceCount === 0) {
+                resultsContent.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                        <i class="fas fa-user-slash" style="font-size: 3rem; color: #fc00ff; margin-bottom: 20px;"></i>
+                        <h3 style="color: #fc00ff;">No faces detected</h3>
+                        <p>Try adjusting the lighting or position of the face.</p>
+                    </div>
+                `;
+            }
+            
+            // Update status
+            showStatus(`Detected ${faceCount} face${faceCount !== 1 ? 's' : ''}`, 'success');
+        }
+        
+        function getDominantExpression(expressions) {
+            if (!expressions) return 'Unknown';
+            
+            let maxProb = 0;
+            let dominant = 'neutral';
+            
+            for (const [expression, probability] of Object.entries(expressions)) {
+                if (probability > maxProb) {
+                    maxProb = probability;
+                    dominant = expression;
+                }
+            }
+            
+            // Capitalize first letter
+            return dominant.charAt(0).toUpperCase() + dominant.slice(1);
+        }
+        
+        // Image Upload Functions
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imageDisplay.src = e.target.result;
+                imageDisplay.style.display = 'block';
+                uploadLabel.style.display = 'none';
+                detectFaceImageBtn.disabled = false;
+                clearImageBtn.disabled = false;
+                showStatus('Image uploaded successfully!', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function clearImage() {
+            imageDisplay.src = '';
+            imageDisplay.style.display = 'none';
+            uploadLabel.style.display = 'flex';
+            detectFaceImageBtn.disabled = true;
+            clearImageBtn.disabled = true;
+            resultsElement.style.display = 'none';
+            showStatus('Image cleared.', 'info');
+        }
+        
+        // UI Helper Functions
+        function showLoading() {
+            loadingElement.style.display = 'block';
+        }
+        
+        function hideLoading() {
+            loadingElement.style.display = 'none';
+        }
+        
+        function showStatus(message, type) {
+            statusElement.textContent = message;
+            statusElement.className = 'status';
+            
+            if (type === 'success') {
+                statusElement.classList.add('success');
+            } else if (type === 'error') {
+                statusElement.classList.add('error');
+            }
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    if (statusElement.textContent === message) {
+                        statusElement.textContent = '';
+                        statusElement.className = 'status';
+                    }
+                }, 5000);
+            }
+        }
+        
+        // Event Listeners
+        startWebcamBtn.addEventListener('click', startWebcam);
+        stopWebcamBtn.addEventListener('click', stopWebcam);
+        detectFaceWebcamBtn.addEventListener('click', startContinuousDetection);
+        detectFaceImageBtn.addEventListener('click', detectFacesInImage);
+        clearImageBtn.addEventListener('click', clearImage);
+        imageUpload.addEventListener('change', handleImageUpload);
+        
+        // Initialize the app when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
